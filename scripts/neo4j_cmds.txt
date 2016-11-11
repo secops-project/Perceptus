@@ -1,0 +1,29 @@
+Use the query bellow to load from a CSV file. 
+The file must have the following collumns:
+
+id,timestamp,target,action,user,source
+
+---
+
+LOAD CSV WITH HEADERS
+FROM "https://xxx/files/ssh.csv"
+AS line FIELDTERMINATOR ","
+MERGE (source:SourceHost { address:line.source })
+CREATE (user:UserName { name:line.user, id:line.id, timestamp:line.timestamp })
+CREATE (source)-[r1:ATTEMPTED_USER]->(user)
+MERGE (action:Action { name:line.action, targetid:line.target})
+CREATE (user)-[r2:CAUSED_ACTION]->(action)
+MERGE (target:TargetHost { address:line.target })
+CREATE (action)-[:ATTEMPTED_TARGET]->(target)
+
+---
+
+Return a subgraph representing all sources and users who had success login in:
+
+MATCH (action:Action {name: "ssh-login-accepted"})<-[:CAUSED_ACTION]-(user)<-[:ATTEMPTED_USER]-(source) RETURN user,action,source
+
+
+
+Temp
+
+MATCH p=shortestPath(  (result:Result {name:" success"})-[*]-(source:SourceHost {address:" 101.251.205.102"})) RETURN p
